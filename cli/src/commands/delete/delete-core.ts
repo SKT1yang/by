@@ -9,9 +9,14 @@ export interface DeleteResult {
   deletedPaths: Set<string>;
 }
 
+export interface DeleteOptions {
+  recursive?: boolean;
+  log?: boolean;
+}
+
 export async function deleteFiles(
   filePatterns: string[],
-  recursive = false
+  { recursive = false, log = false }: DeleteOptions = {}
 ): Promise<DeleteResult> {
   const result: DeleteResult = {
     successFilesCount: 0,
@@ -19,6 +24,33 @@ export async function deleteFiles(
     errorCount: 0,
     deletedPaths: new Set<string>(),
   };
+
+  async function deleteItem(fullPath: string) {
+    if (result.deletedPaths.has(fullPath)) return;
+
+    try {
+      const stat = await fs.stat(fullPath);
+      if (stat.isDirectory()) {
+        if (recursive) {
+          const items = await fs.readdir(fullPath);
+          await Promise.all(
+            items.map((item) => deleteItem(path.join(fullPath, item)))
+          );
+          await fs.rmdir(fullPath);
+          result.successDirsCount++;
+        } else {
+          throw new Error("Directory found. Use -r to delete directories.");
+        }
+      } else {
+        await fs.unlink(fullPath);
+        result.successFilesCount++;
+      }
+      result.deletedPaths.add(fullPath);
+    } catch (err) {
+      result.errorCount++;
+      throw err;
+    }
+  }
 
   const matchedFiles = filePatterns.flatMap((pattern) =>
     glob.sync(pattern, {
@@ -28,39 +60,7 @@ export async function deleteFiles(
     })
   );
 
-  await Promise.all(
-    matchedFiles.map(async (fullPath) => {
-      if (
-        Array.from(result.deletedPaths).some((deletedPath) =>
-          fullPath.startsWith(deletedPath + path.sep)
-        )
-      ) {
-        return;
-      }
-
-      try {
-        const stat = await fs.stat(fullPath);
-        if (stat.isDirectory() && recursive) {
-          const items = await fs.readdir(fullPath);
-          await Promise.all(
-            items.map(async (item) => {
-              const itemPath = path.join(fullPath, item);
-              await deleteFiles([itemPath], true);
-            })
-          );
-          await fs.rmdir(fullPath);
-          result.successDirsCount++;
-        } else {
-          await fs.unlink(fullPath);
-          result.successFilesCount++;
-        }
-        result.deletedPaths.add(fullPath);
-      } catch (err) {
-        result.errorCount++;
-        throw err;
-      }
-    })
-  );
+  await Promise.all(matchedFiles.map(deleteItem));
 
   return result;
 }

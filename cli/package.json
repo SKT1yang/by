@@ -6,7 +6,8 @@
   "scripts": {
     "build": "pnpm unbuild",
     "test": "pnpm test:delete",
-    "test:delete": "./test/delete.sh"
+    "test:delete": "./test/delete.sh",
+    "postinstall": "chmod +x test/delete.sh"
   },
   "files": [
     "dist"
