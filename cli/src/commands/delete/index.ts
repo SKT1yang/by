@@ -4,7 +4,7 @@ import { deleteFiles, DeleteOptions } from "./delete-core";
 import { DeleteStats } from "./delete-stats";
 import { DeleteUI } from "./delete-ui";
 
-export function definedeleteCommand(cac: CAC) {
+function definedeleteCommand(cac: CAC) {
   const version = getVersion();
   const stats = new DeleteStats();
   const ui = new DeleteUI();
@@ -36,4 +36,4 @@ export function definedeleteCommand(cac: CAC) {
     );
 }
 
-export { deleteFiles };
+export { deleteFiles, definedeleteCommand };

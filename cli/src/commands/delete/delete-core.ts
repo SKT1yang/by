@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { glob } from "glob";
+import { DeleteUI } from "./delete-ui";
 
 export interface DeleteResult {
   successFilesCount: number;
@@ -16,7 +17,8 @@ export interface DeleteOptions {
 
 export async function deleteFiles(
   filePatterns: string[],
-  { recursive = false, log = false }: DeleteOptions = {}
+  { recursive = false, log = false }: DeleteOptions = {},
+  ui: DeleteUI = new DeleteUI()
 ): Promise<DeleteResult> {
   const result: DeleteResult = {
     successFilesCount: 0,
@@ -38,12 +40,18 @@ export async function deleteFiles(
           );
           await fs.rmdir(fullPath);
           result.successDirsCount++;
+          if (log) {
+            ui.showDeletedItem(fullPath, true);
+          }
         } else {
           throw new Error("Directory found. Use -r to delete directories.");
         }
       } else {
         await fs.unlink(fullPath);
         result.successFilesCount++;
+        if (log) {
+          ui.showDeletedItem(fullPath, false);
+        }
       }
       result.deletedPaths.add(fullPath);
     } catch (err) {
