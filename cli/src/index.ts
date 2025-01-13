@@ -3,7 +3,7 @@ import colors from "chalk";
 import { getVersion } from "./utils";
 import { cac } from "cac";
 import { defineWrapCommand } from "./commands/wrap";
-import { definedeleteCommand, deleteFiles } from "./commands/delete";
+import { definedeleteCommand } from "./commands/delete";
 
 try {
   const by = cac("by");
@@ -25,5 +25,3 @@ try {
   consola.error(error);
   process.exit(1);
 }
-
-export { deleteFiles };

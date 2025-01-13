@@ -21,4 +21,4 @@ echo 'test7' > $DELETE_DIR/test-dir2/sub1/test7.txt
 echo 'test8' > $DELETE_DIR/test-dir2/sub2/test8.txt
 
 # 执行删除操作
-node dist/index.mjs delete "**/test-dir1" "**/test-dir2" "**/test1.txt" "**/test2.txt" -r
+node dist/index.mjs delete "**/test-dir1" "**/test-dir2" "**/test1.txt" "**/test2.txt" -r -l
