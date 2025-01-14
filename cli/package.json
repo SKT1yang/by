@@ -21,6 +21,9 @@
     ".": {
       "default": "./dist/index.mjs"
     },
+    "./api": {
+      "default": "./dist/api/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "dependencies": {
