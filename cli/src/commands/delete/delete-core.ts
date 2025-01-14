@@ -2,21 +2,12 @@ import fs from "fs-extra";
 import path from "path";
 import { glob } from "glob";
 import { ui } from "./delete-ui";
+import { DELETE_CONFIG } from "./constants";
 
-// 删除操作配置
-const DELETE_CONFIG = {
-  globOptions: {
-    cwd: process.cwd(),
-    absolute: true,
-  },
-  errorMessages: {
-    directoryWithoutRecursive: "Directory found. Use -r to delete directories.",
-  },
-  default: {
-    files: ["dist", "node_modules", ".turbo", "es", "cjs"],
-    lock: ["package-lock.json", "yarn.lock", "pnpm-lock.yaml"],
-  },
-};
+/**
+ * 删除操作核心模块
+ * 提供文件/目录删除、匹配等核心功能
+ */
 
 /**
  * 删除操作结果类型
@@ -53,7 +44,7 @@ async function deleteItem(
 ) {
   // 判断是否存在
   if (!fs.existsSync(fullPath)) {
-    ui.showDeletedItem(fullPath, "deleted");
+    ui.showDeletedItem(fullPath, "notExist");
     return;
   }
   if (result.deletedPaths.has(fullPath)) return;

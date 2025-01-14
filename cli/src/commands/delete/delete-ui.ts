@@ -1,15 +1,11 @@
-import chalk from "chalk";
 import ora from "ora";
 import type { DeleteStats } from "./delete-stats";
+import { UI_STYLES } from "./constants";
 
-// UI样式常量
-const UI_STYLES = {
-  success: chalk.green,
-  error: chalk.red,
-  warning: chalk.yellow,
-  info: chalk.blueBright,
-  detail: chalk.gray,
-};
+/**
+ * 删除操作UI模块
+ * 提供删除操作的进度显示、结果展示等UI功能
+ */
 
 /**
  * 删除操作的UI交互类
@@ -58,10 +54,11 @@ export class DeleteUI {
    * @param path 删除的路径
    * @param isDirectory 是否是目录
    */
-  showDeletedItem(path: string, type: "file" | "directory" | "deleted") {
+  showDeletedItem(path: string, type: "file" | "directory" | 'notExist') {
     let message = `Deleted ${type}: ${path}`;
-    if (type === "deleted") {
-      message = `Has deleted: ${path}`;
+    if (type === "notExist") {
+      // 跳过不存在的文件
+      message = `Not exist, maybe deleted: ${path}`;
     }
     console.log(UI_STYLES.detail(message));
   }

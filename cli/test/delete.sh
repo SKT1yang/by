@@ -4,7 +4,7 @@
 DELETE_DIR="temp-delete-dir"
 
 # 创建测试目录结构
-mkdir -p  $DELETE_DIR/test-dir1/sub1 $DELETE_DIR/test-dir1/sub2 $DELETE_DIR/test-dir2/sub1 $DELETE_DIR/test-dir2/sub2
+mkdir -p  $DELETE_DIR/test-dir1/sub1 $DELETE_DIR/test-dir1/sub2 $DELETE_DIR/test-dir2/sub1 $DELETE_DIR/test-dir2/sub2 $DELETE_DIR/test-dir3 $DELETE_DIR/node_modules/test-dir3
 
 # 创建根目录文件
 echo 'test1' > $DELETE_DIR/test1.txt
@@ -21,10 +21,18 @@ echo 'test6' > $DELETE_DIR/test-dir2/test6.txt
 echo 'test7' > $DELETE_DIR/test-dir2/sub1/test7.txt
 echo 'test8' > $DELETE_DIR/test-dir2/sub2/test8.txt
 
+# 创建test-dir3目录文件
+echo 'test9' > $DELETE_DIR/test-dir3/test9.txt
+
+# 创建node_modules目录文件
+echo 'test9' > $DELETE_DIR/node_modules/test9.txt
+
 # 执行删除操作
-node dist/index.mjs delete "**/test-dir1" "**/test-dir2" "**/test1.txt" "**/test2.txt" -r -l
+node dist/index.mjs delete "**/test-dir1" "**/test-dir2" "**/test1.txt" "**/test2.txt" "$DELETE_DIR/node_modules/test9.txt" -r -l
 
-node dist/index.mjs delete "$DELETE_DIR"
+node dist/index.mjs delete "$DELETE_DIR/test-dir3" -l
 
-node dist/index.mjs delete 
+node dist/index.mjs delete "$DELETE_DIR" -l
+
+# node dist/index.mjs delete 
 
