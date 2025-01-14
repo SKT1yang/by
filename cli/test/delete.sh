@@ -28,11 +28,11 @@ echo 'test9' > $DELETE_DIR/test-dir3/test9.txt
 echo 'test9' > $DELETE_DIR/node_modules/test9.txt
 
 # 执行删除操作
-node dist/index.mjs delete "**/test-dir1" "**/test-dir2" "**/test1.txt" "**/test2.txt" "$DELETE_DIR/node_modules/test9.txt" -r -l
+node dist/bin.mjs delete "**/test-dir1" "**/test-dir2" "**/test1.txt" "**/test2.txt" "$DELETE_DIR/node_modules/test9.txt" -r -l
 
-node dist/index.mjs delete "$DELETE_DIR/test-dir3" -l
+node dist/bin.mjs delete "$DELETE_DIR/test-dir3" -l
 
-node dist/index.mjs delete "$DELETE_DIR" -l
+node dist/bin.mjs delete "$DELETE_DIR" -l
 
-# node dist/index.mjs delete 
+# node dist/bin.mjs delete 
 

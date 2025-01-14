@@ -66,4 +66,4 @@ function defineWrapCommand(cac: CAC) {
     );
 }
 
-export { defineWrapCommand };
+export { defineWrapCommand, runWrap };
