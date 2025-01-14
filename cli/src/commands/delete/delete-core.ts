@@ -1,21 +1,22 @@
 import fs from "fs-extra";
 import path from "path";
 import { glob } from "glob";
-import { DeleteUI } from "./delete-ui";
+import { ui } from "./delete-ui";
 
 // 删除操作配置
 const DELETE_CONFIG = {
   globOptions: {
     cwd: process.cwd(),
-    absolute: true
+    absolute: true,
   },
   errorMessages: {
-    directoryWithoutRecursive: "Directory found. Use -r to delete directories."
-  }
+    directoryWithoutRecursive: "Directory found. Use -r to delete directories.",
+  },
+  default: {
+    files: ["dist", "node_modules", ".turbo", "es", "cjs"],
+    lock: ["package-lock.json", "yarn.lock", "pnpm-lock.yaml"],
+  },
 };
-
-// 类型别名
-type DeleteItem = (fullPath: string, result: DeleteResult, options: DeleteOptions, ui: DeleteUI) => Promise<void>;
 
 /**
  * 删除操作结果类型
@@ -35,6 +36,8 @@ export interface DeleteOptions {
   recursive?: boolean;
   /** 是否输出删除日志 */
   log?: boolean;
+  /** 是否删除默认配置的文件 */
+  isDefaultMode?: boolean;
 }
 
 /**
@@ -42,41 +45,37 @@ export interface DeleteOptions {
  * @param fullPath 要删除的完整路径
  * @param result 删除结果对象
  * @param options 删除配置
- * @param ui UI实例
  */
 async function deleteItem(
   fullPath: string,
   result: DeleteResult,
-  options: DeleteOptions,
-  ui: DeleteUI
+  options: DeleteOptions
 ) {
+  // 判断是否存在
+  if (!fs.existsSync(fullPath)) {
+    ui.showDeletedItem(fullPath, "deleted");
+    return;
+  }
   if (result.deletedPaths.has(fullPath)) return;
 
   try {
     const stat = await fs.stat(fullPath);
     if (stat.isDirectory()) {
-      if (options.recursive) {
-        // 递归删除目录内容
-        const items = await fs.readdir(fullPath);
-        await Promise.all(
-          items.map((item) => deleteItem(path.join(fullPath, item), result, options, ui))
-        );
-        await fs.rmdir(fullPath);
-        result.successDirsCount++;
-        if (options.log) {
-          ui.showDeletedItem(fullPath, true);
-        }
-      } else {
-        throw new Error(DELETE_CONFIG.errorMessages.directoryWithoutRecursive);
-      }
-    } else {
-      await fs.unlink(fullPath);
-      result.successFilesCount++;
+      await fs.rm(fullPath, { recursive: true, force: true });
+      result.successDirsCount++;
+      result.deletedPaths.add(fullPath);
       if (options.log) {
-        ui.showDeletedItem(fullPath, false);
+        ui.showDeletedItem(fullPath, "directory");
       }
     }
-    result.deletedPaths.add(fullPath);
+    if (stat.isFile()) {
+      await fs.unlink(fullPath);
+      result.successFilesCount++;
+      result.deletedPaths.add(fullPath);
+      if (options.log) {
+        ui.showDeletedItem(fullPath, "file");
+      }
+    }
   } catch (err) {
     result.errorCount++;
     throw err;
@@ -84,16 +83,46 @@ async function deleteItem(
 }
 
 /**
+ * 匹配文件
+ * @param patterns 匹配模式数组，可以是glob模式、文件名或路径
+ * @param options 匹配配置选项
+ * @returns 匹配到的文件路径数组
+ */
+export function matchFiles(
+  patterns: string[],
+  options: DeleteOptions
+): string[] {
+  if (options.isDefaultMode) return DELETE_CONFIG.default.files;
+  const nestedFilePathList = patterns.map((pattern) => {
+    // 如果是绝对路径或相对路径
+    if (path.isAbsolute(pattern) || pattern.startsWith(".")) {
+      return path.resolve(pattern);
+    }
+    // 如果是文件名
+    if (!pattern.includes("*") && !pattern.includes("?")) {
+      return glob.sync(options.recursive ? `**/${pattern}` : pattern, {
+        ...DELETE_CONFIG.globOptions,
+        nodir: false,
+      });
+    }
+    // 默认作为glob模式处理
+    return glob.sync(pattern, {
+      ...DELETE_CONFIG.globOptions,
+      nodir: false,
+    });
+  });
+  return nestedFilePathList.flat();
+}
+
+/**
  * 删除匹配指定模式的文件和目录
  * @param filePatterns 文件匹配模式数组
  * @param options 删除配置选项
- * @param ui UI实例
  * @returns 删除结果
  */
 export async function deleteFiles(
   filePatterns: string[],
-  options: DeleteOptions = { recursive: false, log: false },
-  ui: DeleteUI = new DeleteUI()
+  options: DeleteOptions
 ): Promise<DeleteResult> {
   const result: DeleteResult = {
     successFilesCount: 0,
@@ -102,15 +131,12 @@ export async function deleteFiles(
     deletedPaths: new Set<string>(),
   };
 
-  const matchedFiles = filePatterns.flatMap((pattern) =>
-    glob.sync(pattern, {
-      ...DELETE_CONFIG.globOptions,
-      nodir: !options.recursive
-    })
-  );
+  const matchedFiles = matchFiles(filePatterns, options);
+
+  ui.showMatchedFiles(matchedFiles);
 
   await Promise.all(
-    matchedFiles.map((file) => deleteItem(file, result, options, ui))
+    matchedFiles.map((file) => deleteItem(file, result, options))
   );
 
   return result;

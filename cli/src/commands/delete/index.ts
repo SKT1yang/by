@@ -2,10 +2,9 @@ import type { CAC } from "cac";
 import { getVersion } from "../../utils";
 import { deleteFiles, DeleteOptions } from "./delete-core";
 import { DeleteStats } from "./delete-stats";
-import { DeleteUI } from "./delete-ui";
+import { ui } from "./delete-ui";
 
 const stats = new DeleteStats();
-const ui = new DeleteUI();
 
 // 命令配置
 const COMMAND_CONFIG = {
@@ -40,14 +39,9 @@ function definedeleteCommand(cac: CAC) {
       COMMAND_CONFIG.options[1].flag,
       COMMAND_CONFIG.options[1].description
     )
-    .action(
-      async (
-        patterns: string[],
-        options: DeleteOptions = { recursive: false, log: false }
-      ) => {
-        runDelete(patterns, options);
-      }
-    );
+    .action(async (patterns: string[], options?: DeleteOptions) => {
+      runDelete(patterns, options);
+    });
 }
 
 /**
@@ -55,12 +49,21 @@ function definedeleteCommand(cac: CAC) {
  * @param patterns 文件匹配模式
  * @param options 删除选项
  */
-async function runDelete(patterns: string[], options: DeleteOptions) {
+async function runDelete(patterns: string[], options?: DeleteOptions) {
+  const {
+    recursive = false,
+    log = false,
+    isDefaultMode = patterns.length === 0,
+  } = options || {};
   try {
     stats.start();
-    ui.showProgress("正在删除...");
+    ui.showProgress("正在删除...\n");
 
-    const result = await deleteFiles(patterns, options);
+    const result = await deleteFiles(patterns, {
+      recursive: isDefaultMode ? true : recursive,
+      log,
+      isDefaultMode,
+    });
     stats.update(result);
 
     ui.showSuccess("删除完成");

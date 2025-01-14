@@ -8,7 +8,7 @@ const UI_STYLES = {
   error: chalk.red,
   warning: chalk.yellow,
   info: chalk.blueBright,
-  detail: chalk.gray
+  detail: chalk.gray,
 };
 
 /**
@@ -32,6 +32,7 @@ export class DeleteUI {
    * @param message 要显示的消息
    */
   showSuccess(message: string) {
+    console.log('\n');
     this.spinner.succeed(message);
   }
 
@@ -40,6 +41,7 @@ export class DeleteUI {
    * @param message 要显示的消息
    */
   showError(message: string) {
+    console.log('\n');
     this.spinner.fail(message);
   }
 
@@ -56,12 +58,16 @@ export class DeleteUI {
    * @param path 删除的路径
    * @param isDirectory 是否是目录
    */
-  showDeletedItem(path: string, isDirectory: boolean) {
-    console.log(
-      UI_STYLES.detail(
-        `Deleted ${isDirectory ? "directory" : "file"}: ${path}`
-      )
-    );
+  showDeletedItem(path: string, type: "file" | "directory" | "deleted") {
+    let message = `Deleted ${type}: ${path}`;
+    if (type === "deleted") {
+      message = `Has deleted: ${path}`;
+    }
+    console.log(UI_STYLES.detail(message));
+  }
+
+  showMatchedFiles(files: string[]) {
+    console.log(UI_STYLES.info(`Matched files:\n${JSON.stringify(files, null, 2)}`));
   }
 
   /**
@@ -79,10 +85,12 @@ export class DeleteUI {
     │     --目录: ${UI_STYLES.success(stats.successDirs.toString().padEnd(10))}
     │     --文件: ${UI_STYLES.success(stats.successFiles.toString().padEnd(10))}
     │  失败: ${UI_STYLES.error(stats.errors.toString().padEnd(10))}
-    │  耗时: ${UI_STYLES.warning(stats.duration.toString() + ' ms')}
+    │  耗时: ${UI_STYLES.warning(stats.duration.toString() + " ms")}
     └──────────────────────────────┘
     `);
-    
+
     console.log(statsTemplate);
   }
 }
+
+export const ui = new DeleteUI();
